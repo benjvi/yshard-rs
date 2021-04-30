@@ -42,7 +42,7 @@ pub fn simulate_error() -> Result<()> {
 
 // my run command
 pub fn run_yshard() -> Result<()> {
-    shard::shard();
+    shard::shard_yaml();
 
     Ok(())
 }
