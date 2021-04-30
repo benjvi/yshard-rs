@@ -13,26 +13,11 @@ pub fn cli_match() -> Result<()> {
     // Merge clap config file if the value is set
     AppConfig::merge_config(cli_matches.value_of("config"))?;
 
-    // Matches Commands or display help
-    match cli_matches.subcommand_name() {
-        Some("hazard") => {
-            commands::hazard()?;
-        }
-        Some("error") => {
-            commands::simulate_error()?;
-        }
-        Some("config") => {
-            commands::config()?;
-        }
-        Some("run") => {
-            commands::run_yshard()?;
-        }
-        _ => {
-            // Arguments are required by default (in Clap)
-            // This section should never execute and thus
-            // should probably be logged in case it executed.
-        }
-    }
+    let groupby_path = cli_matches.value_of("groupby-path").unwrap();
+    let outdir = cli_matches.value_of("out").unwrap();
+
+    commands::run_yshard(&outdir, &groupby_path)?;
+
     Ok(())
 }
 
@@ -50,13 +35,23 @@ pub fn cli_config() -> Result<clap::ArgMatches> {
                 .long("config")
                 .value_name("FILE")
                 .about("Set a custom config file")
-                .takes_value(true),
+                .takes_value(true)
         )
-        .subcommand(App::new("hazard").about("Generate a hazardous occurance"))
-
-        .subcommand(App::new("error").about("Simulate an error"))
-        .subcommand(App::new("config").about("Show Configuration"))
-        .subcommand(App::new("run").about("Runs yshard"));
+        .arg(
+            Arg::new("out")
+                .short('o')
+                .long("output")
+                .about("Directory to place the output files")
+                .takes_value(true)
+                .required(true)
+        )
+        .arg(
+            Arg::new("groupby-path")
+                .short('g')
+                .about("Path to the element of the document to group by (in jq syntax)")
+                .takes_value(true)
+                .required(true)
+        );
 
     // Get matches
     let cli_matches = cli_app.get_matches();

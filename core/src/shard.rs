@@ -7,8 +7,9 @@ use std::io::prelude::*;
 use serde_yaml;
 extern crate yaml_rust;
 use yaml_rust::{YamlLoader, YamlEmitter};
+extern crate sanitize_filename;
 
-pub fn shard_yaml() -> Result<()> {
+pub fn shard_yaml(outdir: &str, groupby_path: &str) -> Result<()> {
     let mut buffer = String::new();
     io::stdin().read_to_string(&mut buffer)?;
 
@@ -30,18 +31,15 @@ pub fn shard_yaml() -> Result<()> {
     // convert list of serde_json::Value back to json string
     let json_from_yaml = serde_json::to_string(&json_values);
     match json_from_yaml {
-        Ok(v) => shard_json(&v.to_string()),
+        Ok(v) => shard_json(&v.to_string(), outdir, groupby_path),
         Err(e) => eprintln!("error: {:?}", e),
     }
 
     Ok(())
 }
 
-pub fn shard_json(json: &str) -> () {
+pub fn shard_json(json: &str, outdir: &str, groupby_path: &str) -> () {
     // println!("{}", json);
-
-    let outdir = "e2e-results/simple";
-    let groupby_path = "kind";
 
     // expects a json list, groups elements by the given path
     // filtering for only elements where the groupby path is present
@@ -53,7 +51,7 @@ pub fn shard_json(json: &str) -> () {
     }
 
     // get items where the groupby path is not present
-    let jq_ungrouped = format!(".[] |  select(.{groupby} | not)", groupby=groupby_path);
+    let jq_ungrouped = format!("[.[] |  select(.{groupby} | not)]", groupby=groupby_path);
     let ungrouped_result = jq_rs::run(&jq_ungrouped, json);
     match ungrouped_result {
         Ok(v) => handle_ungrouped_json(&v, &outdir),
@@ -63,7 +61,6 @@ pub fn shard_json(json: &str) -> () {
 }
 
 fn handle_grouped_json(grouped_json: &str, outdir: &str) -> (){
-    eprintln!("grouped input successfully");
 
     // get keys and print them
     let jq_groupby_keys = "keys";
@@ -93,7 +90,6 @@ fn output_groups(grouped_json: &str, groups_json: &str, outdir: &str) -> () {
 }
 
 fn handle_ungrouped_json(ungrouped_json: &str, outdir: &str) -> () {
-    eprintln!("handled ungrouped input successfully");
     json_to_yml_file(&ungrouped_json, outdir, "__ungrouped__")
 }
 
@@ -108,10 +104,12 @@ fn json_to_yml_file(json: &str, outdir: &str, file_name: &str) -> () {
 
     let yaml_values = serde_json::from_str::<Vec<serde_yaml::Value>>(json).unwrap();
 
-    eprintln!("writing {0} yaml docs to output file: {1}/{2}.yml", yaml_values.len(), outdir, file_name);
+    let safe_filename =  sanitize_filename::sanitize(file_name);
+    let output_filepath = format!("{0}/{1}.yml",outdir, safe_filename);
 
-    let output_filepath = format!("{0}/{1}.yml",outdir, file_name);
-    let mut file = File::create(output_filepath).expect("Unable to create file");
+    eprintln!("writing {0} yaml docs to output file: {1}/{2}.yml", yaml_values.len(), outdir, safe_filename);
+
+    let mut file = File::create(output_filepath).expect(&format!("Unable to create file{0}/{1}.yml",outdir, safe_filename));
     for val in yaml_values.iter() {
 
         //file.write_all("---".as_bytes()).expect("Unable to write yaml separator");
