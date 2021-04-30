@@ -25,18 +25,20 @@ pub fn shard_yaml() -> Result<()> {
         serde_yaml::from_str::<serde_json::Value>(&out_str).unwrap()
     }).collect();
 
+    eprintln!("{} yaml documents parsed in the input file", json_values.len());
+
     // convert list of serde_json::Value back to json string
     let json_from_yaml = serde_json::to_string(&json_values);
     match json_from_yaml {
         Ok(v) => shard_json(&v.to_string()),
-        Err(e) => println!("error: {:?}", e),
+        Err(e) => eprintln!("error: {:?}", e),
     }
 
     Ok(())
 }
 
 pub fn shard_json(json: &str) -> () {
-    println!("{}", json);
+    // println!("{}", json);
 
     let outdir = "e2e-results/simple";
     let groupby_path = "kind";
@@ -47,7 +49,7 @@ pub fn shard_json(json: &str) -> () {
     let group_result = jq_rs::run(&jq_groupby, json);
     match group_result {
         Ok(v) => handle_grouped_json(&v, &outdir),
-        Err(e) => println!("error grouping json: {:?}", e),
+        Err(e) => eprintln!("error grouping json: {:?}", e),
     }
 
     // get items where the groupby path is not present
@@ -55,51 +57,66 @@ pub fn shard_json(json: &str) -> () {
     let ungrouped_result = jq_rs::run(&jq_ungrouped, json);
     match ungrouped_result {
         Ok(v) => handle_ungrouped_json(&v, &outdir),
-        Err(e) => println!("error grouping json: {:?}", e),
+        Err(e) => eprintln!("error grouping json: {:?}", e),
     }
 
 }
 
 fn handle_grouped_json(grouped_json: &str, outdir: &str) -> (){
-    println!("grouped input successfully");
+    eprintln!("grouped input successfully");
 
     // get keys and print them
     let jq_groupby_keys = "keys";
     let result = jq_rs::run(&jq_groupby_keys, grouped_json);
     match result {
         Ok(v) => output_groups(grouped_json, &v, outdir),
-        Err(e) => println!("error: {:?}", e),
+        Err(e) => eprintln!("error: {:?}", e),
     }
 }
 
 fn output_groups(grouped_json: &str, groups_json: &str, outdir: &str) -> () {
-    println!("groupby keys (json): {}", groups_json);
+    // println!("groupby keys (json): {}", groups_json);
     let groups: Vec<String> = serde_json::from_str(&groups_json).unwrap();
-    println!("groupby keys: {:#?}", groups);
+    // println!("groupby keys: {:#?}", groups);
 
-    println!("{}", grouped_json);
+    //println!("{}", grouped_json);
     for group in groups.iter() {
         let jq_group_content = format!("[.[\"{group}\"][]]", group=group);
-        println!("{}",jq_group_content);
+        //println!("{}",jq_group_content);
         let result = jq_rs::run(&jq_group_content, grouped_json);
         match result {
             Ok(v) => json_to_yml_file(&v, outdir,group),
-            Err(e) => println!("error: {:?}", e),
+            Err(e) => eprintln!("error: {:?}", e),
         }
 
     }
 }
 
 fn handle_ungrouped_json(ungrouped_json: &str, outdir: &str) -> () {
-    println!("handled ungrouped input successfully");
+    eprintln!("handled ungrouped input successfully");
     json_to_yml_file(&ungrouped_json, outdir, "__ungrouped__")
 }
 
 fn json_to_yml_file(json: &str, outdir: &str, file_name: &str) -> () {
     //TODO: skip file write for empty json
-    println!("Writing json to output file: {0}/{1}.json", outdir, file_name);
-    println!("{}", json);
-    let output_filepath = format!("{0}/{1}.json",outdir, file_name);
+
+    //println!("{}", json);
+    if json.len() == 0 {
+        eprintln!("skipping writing empty group {} to file", file_name);
+        return
+    }
+
+    let yaml_values = serde_json::from_str::<Vec<serde_yaml::Value>>(json).unwrap();
+
+    eprintln!("writing {0} yaml docs to output file: {1}/{2}.yml", yaml_values.len(), outdir, file_name);
+
+    let output_filepath = format!("{0}/{1}.yml",outdir, file_name);
     let mut file = File::create(output_filepath).expect("Unable to create file");
-    file.write_all(json.as_bytes()).expect("Unable to write data");
+    for val in yaml_values.iter() {
+
+        //file.write_all("---".as_bytes()).expect("Unable to write yaml separator");
+        let yaml_str = serde_yaml::to_string(&val).unwrap();
+        file.write_all(yaml_str.as_bytes()).expect("Unable to write data");
+    }
+
 }
