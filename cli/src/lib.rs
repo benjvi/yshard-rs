@@ -24,11 +24,10 @@ pub fn cli_match() -> Result<()> {
 /// Configure Clap
 /// This function will configure clap and match arguments
 pub fn cli_config() -> Result<clap::ArgMatches> {
-    let cli_app = App::new("rust-starter")
+    let cli_app = App::new("yshard")
         .setting(AppSettings::ArgRequiredElseHelp)
         .version(crate_version!())
         .about(crate_description!())
-        .author(crate_authors!("\n"))
         .arg(
             Arg::new("config")
                 .short('c')
@@ -40,7 +39,7 @@ pub fn cli_config() -> Result<clap::ArgMatches> {
         .arg(
             Arg::new("out")
                 .short('o')
-                .long("output")
+                .long("output-dir")
                 .about("Directory to place the output files")
                 .takes_value(true)
                 .required(true)
@@ -48,6 +47,7 @@ pub fn cli_config() -> Result<clap::ArgMatches> {
         .arg(
             Arg::new("groupby-path")
                 .short('g')
+                .long("groupby-path")
                 .about("Path to the element of the document to group by (in jq syntax)")
                 .takes_value(true)
                 .required(true)

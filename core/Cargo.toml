@@ -1,8 +1,8 @@
 [package]
 name = "core"
-version = "1.0.0"
-authors = ["Abid Omar <contact@omarabid.com>"]
-description = "The application core code"
+version = "0.0.1"
+authors = ["Ben Vickers <ben881@gmail.com>"]
+description = "core code for splitting a multi-document yaml file into multiple files, using a jq groupby"
 edition = "2018"
 
 [dependencies]

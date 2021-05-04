@@ -1,14 +1,14 @@
 [package]
 name = "yshard"
-version = "1.0.0"
-authors = ["Abid Omar <contact@omarabid.com>"]
+version = "0.0.1"
+authors = ["Ben Vickers <ben881@gmail.com>"]
 edition = "2018"
-repository = "https://github.com/omarabid/rust-starter"
+repository = "https://github.com/benjvi/yshard"
 readme = "README.md"
-license = "MIT"
-keywords = ["cli", "starter"]
+license = ""
+keywords = ["cli", "yaml"]
 description = """
-Rust Starter aims to provide high quality components to bootstrap your Rust CLI Project. It includes a battery of most used libraries; and defines a set of Rust best practices.
+
 """
 
 [workspace]
