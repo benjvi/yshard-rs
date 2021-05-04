@@ -43,7 +43,7 @@ pub fn shard_json(json: &str, outdir: &str, groupby_path: &str) -> () {
 
     // expects a json list, groups elements by the given path
     // filtering for only elements where the groupby path is present
-    let jq_groupby = format!("[ .[] |  select(.{groupby})] | [group_by(.{groupby})[] | {{ (.[0] | .{groupby}): . }}] | add", groupby=groupby_path);
+    let jq_groupby = format!("[ .[] |  select({groupby})] | [group_by({groupby})[] | {{ (.[0] | {groupby}): . }}] | add", groupby=groupby_path);
     let group_result = jq_rs::run(&jq_groupby, json);
     match group_result {
         Ok(v) => handle_grouped_json(&v, &outdir),
@@ -51,7 +51,7 @@ pub fn shard_json(json: &str, outdir: &str, groupby_path: &str) -> () {
     }
 
     // get items where the groupby path is not present
-    let jq_ungrouped = format!("[.[] |  select(.{groupby} | not)]", groupby=groupby_path);
+    let jq_ungrouped = format!("[.[] |  select({groupby} | not)]", groupby=groupby_path);
     let ungrouped_result = jq_rs::run(&jq_ungrouped, json);
     match ungrouped_result {
         Ok(v) => handle_ungrouped_json(&v, &outdir),
