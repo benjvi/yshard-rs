@@ -132,6 +132,7 @@ fn check_orphaned_yml_files_in_outdir(outdir: &str, expected_yml_files: HashSet<
 
     let yml_files_glob = format!("{}/*.yml", outdir);
     let current_paths:glob::Paths = glob(&yml_files_glob).unwrap();
+    // got all the unwraps here
     let current_yml_files:HashSet<String> = current_paths.map( |p| { String::from(p.unwrap().file_name().unwrap().to_str().unwrap()) }).collect();
 
     // yml files that are present in the directory but not in our groups
@@ -142,6 +143,5 @@ fn check_orphaned_yml_files_in_outdir(outdir: &str, expected_yml_files: HashSet<
     if difference.len() > 0 {
         eprintln!("WARNING: .yml files found in output directory that were not written to and may be orphaned. You may want to remove these files: {}", shell_friendly_list_str)
     }
-
 
 }
