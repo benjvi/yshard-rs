@@ -4,10 +4,13 @@ use std::io::{self, Read};
 use serde_json;
 use std::fs::File;
 use std::io::prelude::*;
+use std::collections::HashSet;
 use serde_yaml;
 extern crate yaml_rust;
 use yaml_rust::{YamlLoader, YamlEmitter};
 extern crate sanitize_filename;
+extern crate glob;
+use self::glob::glob;
 
 pub fn shard_yaml(outdir: &str, groupby_path: &str) -> Result<()> {
     let mut buffer = String::new();
@@ -73,7 +76,7 @@ fn handle_grouped_json(grouped_json: &str, outdir: &str) -> (){
 
 fn output_groups(grouped_json: &str, groups_json: &str, outdir: &str) -> () {
     // println!("groupby keys (json): {}", groups_json);
-    let groups: Vec<String> = serde_json::from_str(&groups_json).unwrap();
+    let mut groups: Vec<String> = serde_json::from_str(&groups_json).unwrap();
     // println!("groupby keys: {:#?}", groups);
 
     //println!("{}", grouped_json);
@@ -87,6 +90,11 @@ fn output_groups(grouped_json: &str, groups_json: &str, outdir: &str) -> () {
         }
 
     }
+
+    // for orphan checking, exclude 'ungrouped' group as we'll always write to it
+    groups.push(String::from("__ungrouped__"));
+    let expected_yml_files:HashSet<String> = groups.iter().map( |g| format!("{}.yml", sanitize_filename::sanitize(g))).collect();
+    check_orphaned_yml_files_in_outdir(outdir, expected_yml_files);
 }
 
 fn handle_ungrouped_json(ungrouped_json: &str, outdir: &str) -> () {
@@ -107,7 +115,7 @@ fn json_to_yml_file(json: &str, outdir: &str, file_name: &str) -> () {
     let safe_filename =  sanitize_filename::sanitize(file_name);
     let output_filepath = format!("{0}/{1}.yml",outdir, safe_filename);
 
-    eprintln!("writing {0} yaml docs to output file: {1}/{2}.yml", yaml_values.len(), outdir, safe_filename);
+    eprintln!("writing {0} yml docs to output file: {1}/{2}.yml", yaml_values.len(), outdir, safe_filename);
 
     let mut file = File::create(output_filepath).expect(&format!("Unable to create file{0}/{1}.yml",outdir, safe_filename));
     for val in yaml_values.iter() {
@@ -116,5 +124,24 @@ fn json_to_yml_file(json: &str, outdir: &str, file_name: &str) -> () {
         let yaml_str = serde_yaml::to_string(&val).unwrap();
         file.write_all(yaml_str.as_bytes()).expect("Unable to write data");
     }
+
+}
+
+
+fn check_orphaned_yml_files_in_outdir(outdir: &str, expected_yml_files: HashSet<String>) {
+
+    let yml_files_glob = format!("{}/*.yml", outdir);
+    let current_paths:glob::Paths = glob(&yml_files_glob).unwrap();
+    let current_yml_files:HashSet<String> = current_paths.map( |p| { String::from(p.unwrap().file_name().unwrap().to_str().unwrap()) }).collect();
+
+    // yml files that are present in the directory but not in our groups
+    let difference:HashSet<_> = current_yml_files.difference(&expected_yml_files).collect();
+
+    let shell_friendly_list_str = difference.iter().fold(String::new(), |s, arg| s + &arg + " ");
+
+    if difference.len() > 0 {
+        eprintln!("WARNING: .yml files found in output directory that were not written to and may be orphaned. You may want to remove these files: {}", shell_friendly_list_str)
+    }
+
 
 }
