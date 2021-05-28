@@ -18,6 +18,23 @@ yshard is a CLI that takes a single YAML file as input and splits it into separa
 
 # Getting Started
 
+Grab the binary for your architecture from [the releases page](https://github.com/benjvi/yshard/releases) (note - a build for Windows is not currently available). 
+
+Get a YAML file you want to split up, for example:
+
+`wget https://raw.githubusercontent.com/argoproj/argo-workflows/stable/manifests/install.yaml`
+
+Now use yshard to split the YAML, in this case we split by the `kind` field of each document, putting documents with the same `kind` in the same file in `output-directory`:
+
+`cat install | yshard -g ".kind" -o output-directory`
+
+Then in the output directory you see: 
+
+```$ ls output-directory
+ClusterRole.yml              ConfigMap.yml                Deployment.yml               RoleBinding.yml              ServiceAccount.yml
+ClusterRoleBinding.yml       CustomResourceDefinition.yml Role.yml                     Service.yml                  __ungrouped__.yml
+```
+
 # Implementation
 
 This CLI is built in Rust, based on [rust-starter](https://github.com/rust-starter/rust-starter). It largely relies on jq-rs for the json manipulation.
