@@ -30,7 +30,8 @@ Now use yshard to split the YAML, in this case we split by the `kind` field of e
 
 Then in the output directory you see: 
 
-```$ ls output-directory
+```
+$ ls output-directory
 ClusterRole.yml              ConfigMap.yml                Deployment.yml               RoleBinding.yml              ServiceAccount.yml
 ClusterRoleBinding.yml       CustomResourceDefinition.yml Role.yml                     Service.yml                  __ungrouped__.yml
 ```
