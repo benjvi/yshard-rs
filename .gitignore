@@ -6,3 +6,4 @@ custom_config.toml
 .DS_Store
 e2e-results
 .idea
+yshard-*
