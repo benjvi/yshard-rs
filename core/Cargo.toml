@@ -5,6 +5,7 @@ authors = ["Ben Vickers <ben881@gmail.com>"]
 description = "core code for splitting a multi-document yaml file into multiple files, using a jq groupby"
 edition = "2018"
 
+
 [dependencies]
 utils = { path = "../utils" }
 
@@ -16,9 +17,13 @@ yaml-rust = "0.4"
 sanitize-filename = "0.3.0"
 glob = "0.3.0"
 
+
 [dependencies.clap]
-version = "3.0.0-beta.2"
+version = "=3.0.0-beta.2"
 features = ["yaml"]
 
 [dependencies.jq-rs]
 version = "0.4.1"
+
+[dependencies.jq-sys]
+features = ["bundled"]

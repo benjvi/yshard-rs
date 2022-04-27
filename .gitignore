@@ -7,3 +7,4 @@ custom_config.toml
 e2e-results
 .idea
 yshard-*
+*.iml
