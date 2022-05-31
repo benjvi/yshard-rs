@@ -11,11 +11,6 @@ use utils::app_config::AppConfig;
 use utils::error::Result;
 
 fn main() -> Result<()> {
-    // Human Panic. Only enabled when *not* debugging.
-    #[cfg(not(debug_assertions))]
-    {
-        setup_panic!();
-    }
 
     // Better Panic. Only enabled *when* debugging.
     #[cfg(debug_assertions)]
